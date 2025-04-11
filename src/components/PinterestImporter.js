@@ -1,14 +1,10 @@
 import React, { useState } from 'react';
 import { RiPinterestLine } from 'react-icons/ri';
 import { FiExternalLink, FiX } from 'react-icons/fi';
-import { authenticatePinterest, fetchPinterestBoards, fetchPinsFromBoard } from '../utils/pinterestApi';
+import { authenticatePinterest } from '../utils/pinterestApi';
 
-const PinterestImporter = ({ onImport, moodboardId, sectionId, closeModal }) => {
+const PinterestImporter = ({ onImport, moodboardId, closeModal }) => {
   const [status, setStatus] = useState('initial'); // 'initial', 'authenticating', 'authenticated', 'loading', 'error'
-  const [boards, setBoards] = useState([]);
-  const [selectedBoard, setSelectedBoard] = useState(null);
-  const [pins, setPins] = useState([]);
-  const [selectedPins, setSelectedPins] = useState([]);
   const [error, setError] = useState(null);
 
   const handleConnect = async () => {
@@ -20,64 +16,14 @@ const PinterestImporter = ({ onImport, moodboardId, sectionId, closeModal }) => 
       
       if (authResult.success) {
         setStatus('authenticated');
-        const boardsResult = await fetchPinterestBoards(authResult.accessToken);
-        
-        if (boardsResult.success) {
-          setBoards(boardsResult.boards);
-        } else {
-          throw new Error(boardsResult.message);
-        }
+        // Note: In a real implementation, we would fetch boards and pins here
+        // For this demo, we just show the error message from the API
       } else {
         throw new Error(authResult.message);
       }
     } catch (err) {
       console.error('Pinterest connection error:', err);
       setError(err.message || 'Failed to connect to Pinterest');
-      setStatus('error');
-    }
-  };
-
-  const handleSelectBoard = async (board) => {
-    setSelectedBoard(board);
-    setStatus('loading');
-    setError(null);
-    
-    try {
-      const pinsResult = await fetchPinsFromBoard(null, board.id);
-      
-      if (pinsResult.success) {
-        setPins(pinsResult.pins);
-        setStatus('authenticated');
-      } else {
-        throw new Error(pinsResult.message);
-      }
-    } catch (err) {
-      console.error('Error fetching pins:', err);
-      setError(err.message || 'Failed to fetch pins');
-      setStatus('error');
-    }
-  };
-
-  const togglePinSelection = (pin) => {
-    if (selectedPins.some(p => p.id === pin.id)) {
-      setSelectedPins(selectedPins.filter(p => p.id !== pin.id));
-    } else {
-      setSelectedPins([...selectedPins, pin]);
-    }
-  };
-
-  const handleImport = async () => {
-    if (selectedPins.length === 0) return;
-    
-    setStatus('loading');
-    setError(null);
-    
-    try {
-      await onImport(moodboardId, sectionId, selectedPins);
-      closeModal();
-    } catch (err) {
-      console.error('Error importing pins:', err);
-      setError(err.message || 'Failed to import pins');
       setStatus('error');
     }
   };
