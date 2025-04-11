@@ -1,12 +1,8 @@
-import axios from 'axios';
-
 // Note: This is a placeholder for Pinterest API integration
 // Actual implementation would require OAuth and proper API keys
 
 // This is a simplified version for demonstration purposes
 // In a real app, you'd need to implement proper OAuth flow
-
-const PINTEREST_API_URL = 'https://api.pinterest.com/v5';
 
 export const authenticatePinterest = async () => {
   // In a real implementation, this would redirect to Pinterest OAuth
@@ -17,12 +13,10 @@ export const authenticatePinterest = async () => {
   };
 };
 
-export const fetchPinterestBoards = async (accessToken) => {
+export const fetchPinterestBoards = async () => {
   try {
-    // This would be a real API call with the token
-    // const response = await axios.get(`${PINTEREST_API_URL}/boards`, {
-    //   headers: { Authorization: `Bearer ${accessToken}` }
-    // });
+    // In a real implementation, this would use the Pinterest API
+    // to fetch the user's boards
     
     // For demo, return mock data
     return {
@@ -38,10 +32,8 @@ export const fetchPinterestBoards = async (accessToken) => {
 
 export const fetchPinsFromBoard = async (accessToken, boardId) => {
   try {
-    // This would be a real API call
-    // const response = await axios.get(`${PINTEREST_API_URL}/boards/${boardId}/pins`, {
-    //   headers: { Authorization: `Bearer ${accessToken}` }
-    // });
+    // In a real implementation, this would use the Pinterest API
+    // to fetch pins from a specific board
     
     // For demo, return mock data
     return {
