@@ -6,6 +6,10 @@ import { FiArrowLeft, FiPlus, FiImage, FiFileText, FiLink, FiLayout } from 'reac
 import { RiPinterestLine } from 'react-icons/ri';
 import SectionContainer from './SectionContainer';
 import ToolPanel from './ToolPanel';
+import MediaUploader from './MediaUploader';
+import TextEditor from './TextEditor';
+import LinkAdder from './LinkAdder';
+import PinterestImporter from './PinterestImporter';
 import { fileToDataURL, createThumbnail } from '../utils/fileUtils';
 
 const MoodboardEditor = () => {
@@ -17,6 +21,7 @@ const MoodboardEditor = () => {
     createSection, 
     getSections,
     getMediaItems,
+    addMediaItem,
     importFromPinterest
   } = useMoodboard();
   
@@ -30,11 +35,13 @@ const MoodboardEditor = () => {
   const [showAddSectionModal, setShowAddSectionModal] = useState(false);
   const [newSectionTitle, setNewSectionTitle] = useState('');
   const [showPinterestModal, setShowPinterestModal] = useState(false);
+  const [activeSection, setActiveSection] = useState(null);
+  const [showMediaUploader, setShowMediaUploader] = useState(false);
+  const [showTextEditor, setShowTextEditor] = useState(false);
+  const [showLinkAdder, setShowLinkAdder] = useState(false);
   
   const stageRef = useRef(null);
   const containerRef = useRef(null);
-  const fileInputRef = useRef(null);
-  const textInputRef = useRef(null);
 
   // Load moodboard data
   useEffect(() => {
@@ -69,6 +76,19 @@ const MoodboardEditor = () => {
 
     loadMoodboardData();
   }, [id, getMoodboard, getSections, getMediaItems]);
+
+  // Update window dimensions on resize
+  useEffect(() => {
+    const handleResize = () => {
+      if (stageRef.current) {
+        stageRef.current.width(window.innerWidth);
+        stageRef.current.height(window.innerHeight - 64); // Subtract header height
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Handle zoom and pan
   const handleWheel = (e) => {
@@ -134,12 +154,90 @@ const MoodboardEditor = () => {
     }
   };
 
-  // Handle file upload
-  const handleFileUpload = async (e, sectionId) => {
-    const files = e.target.files;
-    if (files && files.length > 0) {
-      // Process files and add them as media items
-      // This would be implemented in your context
+  // Handle media upload
+  const handleMediaUpload = async (mediaData) => {
+    if (!activeSection) return;
+    
+    const mediaId = await addMediaItem(
+      activeSection.id,
+      mediaData.type,
+      mediaData.content,
+      mediaData.src,
+      mediaData.position
+    );
+    
+    if (mediaId) {
+      // Update the sections state with the new media item
+      setSections(sections.map(section => {
+        if (section.id === activeSection.id) {
+          return {
+            ...section,
+            mediaItems: [
+              ...section.mediaItems,
+              {
+                id: mediaId,
+                sectionId: activeSection.id,
+                type: mediaData.type,
+                content: mediaData.content,
+                src: mediaData.src,
+                position: mediaData.position
+              }
+            ]
+          };
+        }
+        return section;
+      }));
+    }
+  };
+
+  // Handle text note addition
+  const handleAddTextNote = async (content) => {
+    if (!activeSection) return;
+    
+    await handleMediaUpload({
+      type: 'text',
+      content,
+      src: null,
+      position: { x: 0, y: 0 }
+    });
+  };
+
+  // Handle link addition
+  const handleAddLink = async (linkData) => {
+    if (!activeSection) return;
+    
+    await handleMediaUpload({
+      type: 'link',
+      content: linkData.content,
+      src: linkData.src,
+      position: { x: 0, y: 0 }
+    });
+  };
+
+  // Open media uploader for a specific section
+  const openMediaUploader = (sectionId) => {
+    const section = sections.find(s => s.id === sectionId);
+    if (section) {
+      setActiveSection(section);
+      setShowMediaUploader(true);
+    }
+  };
+
+  // Open text editor for a specific section
+  const openTextEditor = (sectionId) => {
+    const section = sections.find(s => s.id === sectionId);
+    if (section) {
+      setActiveSection(section);
+      setShowTextEditor(true);
+    }
+  };
+
+  // Open link adder for a specific section
+  const openLinkAdder = (sectionId) => {
+    const section = sections.find(s => s.id === sectionId);
+    if (section) {
+      setActiveSection(section);
+      setShowLinkAdder(true);
     }
   };
 
@@ -149,7 +247,16 @@ const MoodboardEditor = () => {
       section.id === sectionId ? { ...section, position: newPosition } : section
     ));
     
-    // Save the new position to the database in the real implementation
+    // Save the new position to the database
+    const section = sections.find(s => s.id === sectionId);
+    if (section) {
+      updateSection(sectionId, { position: newPosition });
+    }
+  };
+
+  // Handle section deletion (callback for SectionContainer)
+  const handleSectionDeleted = (sectionId) => {
+    setSections(sections.filter(section => section.id !== sectionId));
   };
 
   // Generate a thumbnail for the moodboard
@@ -158,6 +265,24 @@ const MoodboardEditor = () => {
       const dataURL = stageRef.current.toDataURL();
       const thumbnail = await createThumbnail(dataURL);
       await updateMoodboard(id, { thumbnail });
+      
+      // Update the local state as well
+      setMoodboard({
+        ...moodboard,
+        thumbnail
+      });
+    }
+  };
+
+  // Handle Pinterest import
+  const handlePinterestImport = async (moodboardId, sectionId, pins) => {
+    try {
+      // In a real app, this would process the pins and add them as media items
+      // For now, we'll just show an error
+      setError('Pinterest integration is not fully implemented in this demo');
+    } catch (err) {
+      console.error('Error importing from Pinterest:', err);
+      setError('Failed to import from Pinterest');
     }
   };
 
@@ -241,6 +366,10 @@ const MoodboardEditor = () => {
                 <SectionContainer
                   section={section}
                   onDragEnd={handleSectionDragEnd}
+                  onDeleted={handleSectionDeleted}
+                  onAddImage={() => openMediaUploader(section.id)}
+                  onAddText={() => openTextEditor(section.id)}
+                  onAddLink={() => openLinkAdder(section.id)}
                 />
               </Group>
             ))}
@@ -291,43 +420,64 @@ const MoodboardEditor = () => {
         </div>
       )}
 
-      {/* Pinterest Modal */}
-      {showPinterestModal && (
+      {/* Media Uploader Modal */}
+      {showMediaUploader && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
-            <h2 className="text-xl font-bold mb-4">Import from Pinterest</h2>
-            <p className="mb-4 text-gray-600">
-              Pinterest integration is not implemented in this demo version.
-            </p>
-            <div className="flex justify-end">
-              <button 
-                onClick={() => setShowPinterestModal(false)}
-                className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-100"
-              >
-                Close
-              </button>
-            </div>
+          <div className="bg-white rounded-lg w-full max-w-2xl">
+            <MediaUploader 
+              onUpload={handleMediaUpload} 
+              sectionId={activeSection?.id} 
+              closeModal={() => {
+                setShowMediaUploader(false);
+                setActiveSection(null);
+              }} 
+            />
           </div>
         </div>
       )}
 
-      {/* Hidden file inputs */}
-      <input 
-        type="file" 
-        ref={fileInputRef} 
-        style={{ display: 'none' }} 
-        accept="image/*"
-        onChange={(e) => handleFileUpload(e)}
-        multiple
-      />
-      <input 
-        type="file" 
-        ref={textInputRef} 
-        style={{ display: 'none' }} 
-        accept=".txt,.md,.pdf"
-        onChange={(e) => handleFileUpload(e)}
-        multiple
-      />
+      {/* Text Editor Modal */}
+      {showTextEditor && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg w-full max-w-2xl">
+            <TextEditor 
+              onSave={handleAddTextNote} 
+              closeModal={() => {
+                setShowTextEditor(false);
+                setActiveSection(null);
+              }} 
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Link Adder Modal */}
+      {showLinkAdder && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg w-full max-w-2xl">
+            <LinkAdder 
+              onSave={handleAddLink} 
+              closeModal={() => {
+                setShowLinkAdder(false);
+                setActiveSection(null);
+              }} 
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Pinterest Modal */}
+      {showPinterestModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg w-full max-w-2xl">
+            <PinterestImporter 
+              onImport={handlePinterestImport}
+              moodboardId={id}
+              closeModal={() => setShowPinterestModal(false)}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };
