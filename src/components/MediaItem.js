@@ -45,12 +45,6 @@ const MediaItem = ({ item, position }) => {
     updateMediaItem(item.id, { position: newPosition });
   };
 
-  const handleDelete = () => {
-    if (window.confirm('Are you sure you want to delete this item?')) {
-      deleteMediaItem(item.id);
-    }
-  };
-
   return (
     <Group
       x={position.x}
