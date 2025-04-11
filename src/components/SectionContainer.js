@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Rect, Group, Text, Image } from 'react-konva';
+import { Rect, Group, Text } from 'react-konva';
 import { useMoodboard } from '../contexts/MoodboardContext';
 import MediaItem from './MediaItem';
 import SectionToolbar from './SectionToolbar';
@@ -22,10 +22,6 @@ const SectionContainer = ({
   const handleDragEnd = (e) => {
     const newPosition = { x: e.target.x(), y: e.target.y() };
     onDragEnd(section.id, newPosition);
-  };
-
-  const handleTitleChange = (e) => {
-    setTitle(e.target.value);
   };
 
   const saveTitleChange = () => {
@@ -137,6 +133,7 @@ const SectionContainer = ({
             fill="#1f2937"
             width={size.width - 32}
             onDblClick={() => setIsEditing(true)}
+            onChange={(e) => setTitle(e.target.value)}
           />
           <Group x={size.width - 80} y={14}>
             <Rect
