@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useMoodboard } from '../contexts/MoodboardContext';
 import { Stage, Layer, Group } from 'react-konva';
-import { FiArrowLeft, FiPlus, FiImage, FiFileText, FiLink, FiLayout } from 'react-icons/fi';
+import { FiArrowLeft, FiLayout } from 'react-icons/fi';
 import { RiPinterestLine } from 'react-icons/ri';
 import SectionContainer from './SectionContainer';
 import ToolPanel from './ToolPanel';
@@ -10,7 +10,7 @@ import MediaUploader from './MediaUploader';
 import TextEditor from './TextEditor';
 import LinkAdder from './LinkAdder';
 import PinterestImporter from './PinterestImporter';
-import { fileToDataURL, createThumbnail } from '../utils/fileUtils';
+import { createThumbnail } from '../utils/fileUtils';
 
 const MoodboardEditor = () => {
   const { id } = useParams();
@@ -18,11 +18,11 @@ const MoodboardEditor = () => {
   const { 
     getMoodboard, 
     updateMoodboard, 
-    createSection, 
+    createSection,
+    updateSection, 
     getSections,
     getMediaItems,
-    addMediaItem,
-    importFromPinterest
+    addMediaItem
   } = useMoodboard();
   
   const [moodboard, setMoodboard] = useState(null);
