@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Rect, Group, Text, Image } from 'react-konva';
 import { useMoodboard } from '../contexts/MoodboardContext';
 import MediaItem from './MediaItem';
